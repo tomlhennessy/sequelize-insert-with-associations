@@ -41,7 +41,31 @@ app.post('/bands/:bandId/musicians', async (req, res, next) => {
 
 // STEP 2: Connecting two existing records (Many-to-Many)
 app.post('/musicians/:musicianId/instruments', async (req, res, next) => {
-    // Your code here
+    const { musicianId } = req.params;
+    const { instrumentIds } = req.body;
+
+    try {
+        // find the musician by ID
+        const musician = await Musician.findByPk(musicianId);
+
+        if (!musician) {
+            return res.status(404).json({ message: `Musician with ID ${musicianId} not found.`});
+        }
+
+        if (!Array.isArray(instrumentIds) || instrumentIds.length === 0) {
+            return res.status(400).json({ message: 'Instrument IDs must be a non-empty array.' });
+        }
+
+        // associate the musician with instruments
+        await musician.addInstruments(instrumentIds);
+
+        res.status(200).json({
+            message: `Associated ${musician.firstName} with instruments ${instrumentIds.join(',')}.`,
+        })
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Something went wrong.' });
+    }
 })
 
 
